@@ -42,7 +42,7 @@ class RRTBase(object):
         # src.rrt.tree.py의 Tree를 호출
         self.trees.append(Tree(self.X))
 
-    # 함수 발동 : rrt.py의 def rrt_search에서 호출 connect_to_point에서 호출
+    # 함수 발동 : rrt.py의 def rrt_search에서 호출, connect_to_point에서 호출
     # 입력 변수 : 0(tree), (0, 0)(v)
     # 반환 변수 : 없다.
     def add_vertex(self, tree, v):
@@ -51,19 +51,19 @@ class RRTBase(object):
         :param tree: 정점을 추가할 트리
         :param v: 튜플 형태의 추가할 정점
         """
+        # 정점을 추가하는 과정인듯
         self.trees[tree].V.insert(0, v + v, v)
         # 트리에 정점하나 카운트 추가
         self.trees[tree].V_count += 1
         # 샘플 카운트도 추가
         self.samples_taken += 1  
 
+    # 함수 발동 : def connect_to_point에서 호출
+    # 입력 변수 : 0(tree), 내분점(child), 가장 가까운 점(parent)
+    # 반환 변수 : 없다.
     def add_edge(self, tree, child, parent):
-        """
-        Add edge to corresponding tree
-        :param tree: int, tree to which to add vertex
-        :param child: tuple, child vertex
-        :param parent: tuple, parent vertex
-        """
+        # child에 parent의 정보를 넣는다.(역추적할 수 있게끔)
+        print(parent)
         self.trees[tree].E[child] = parent
 
     # 함수 발동 : get_nearest에서 호출
@@ -78,8 +78,8 @@ class RRTBase(object):
         # .nearest는 from rtree import index(내장된 모듈)에서 있는 함수인 듯    https://rtree.readthedocs.io/en/latest/tutorial.html
         return self.trees[tree].V.nearest(x, num_results=n, objects="raw")
 
-    # 함수 발동 : new_and_near에서 호출
-    # 입력 변수 : 0(tree), x_rand(x)
+    # 함수 발동 : new_and_near에서 호출,     can_connect_to_goal에서 호출
+    # 입력 변수 : 0(tree), x_rand(x)         0(tree), self.x_goal(x)
     # 반환 변수 : x_nearest
     def get_nearest(self, tree, x):
         """
@@ -116,14 +116,11 @@ class RRTBase(object):
         return x_new, x_nearest
 
     # 함수 발동 : rrt.py에 있는 rrt_search에서 호출
-    # 입력 변수 : 0(tree), (x_a), (x_b)
+    # 입력 변수 : 0(tree), 가장 가까운 점(x_a), 새로 생성된 내분점(x_b)
+    # 함수 설명 : 새로 생성된 내분점이 여태껏 없던 것인가 질문 and 장애물과는 충돌하지 않는지 체크
     # 반환 변수 : 새로 생성된 내분점(x_new), 가장 가까운 점(x_nearest)
     def connect_to_point(self, tree, x_a, x_b):
         """
-        Connect vertex x_a in tree to vertex x_b
-        :param tree: int, tree to which to add edge
-        :param x_a: tuple, vertex
-        :param x_b: tuple, vertex
         :return: bool, True if able to add edge, False if prohibited by an obstacle
         """
         if self.trees[tree].V.count(x_b) == 0 and self.X.collision_free(x_a, x_b, self.r):
@@ -132,20 +129,26 @@ class RRTBase(object):
             return True
         return False
 
+    # get_path에서 호출
+    # 입력 변수 : 0(tree)
+    # 함수 설명 : 목표가 그래프에 연결될 수 있는지 확인
+    # 반환 변수 : 가능한 경우 true 아닌 경우 false
     def can_connect_to_goal(self, tree):
-        """
-        Check if the goal can be connected to the graph
-        :param tree: rtree of all Vertices
-        :return: True if can be added, False otherwise
-        """
         x_nearest = self.get_nearest(tree, self.x_goal)
+        # 트리 안에 목표가 있는 것과 트리 한 칸 위에 가장 가까운 정점이 있는지를 체크
         if self.x_goal in self.trees[tree].E and x_nearest in self.trees[tree].E[self.x_goal]:
-            # tree is already connected to goal using nearest vertex
             return True
+        # 마지막에 직선의 형태가 나왔던 이유
+        # 목표로부터 가장 가까운 점과 직선으로 이었을 때 장애물과 부딪히지 않았을 때
+        # 직진
         if self.X.collision_free(x_nearest, self.x_goal, self.r):  # check if obstacle-free
             return True
         return False
 
+    # check_solution에서 호출
+    # 입력 변수 : 없다.
+    # 함수 설명 : 시점에 종점까지 트리를 통한 반환 경로
+    # 반환 변수 : 가능한 경우 경로를 반환하고 그렇지 않은 경우에 반환하지 않는다.
     def get_path(self):
         """
         Return path through tree from start to goal
@@ -158,42 +161,57 @@ class RRTBase(object):
         print("Could not connect to goal")
         return None
 
+    # get_path 마지막 조금 위에서 호출
+    # 입력 변수 : 0(tree)
+    # 함수 설명 : 목적지 즉 종점과 그래프를 연결한다.
+    # 반환 변수 : 없다.
     def connect_to_goal(self, tree):
         """
         Connect x_goal to graph
-        (does not check if this should be possible, for that use: can_connect_to_goal)
-        :param tree: rtree of all Vertices
         """
         x_nearest = self.get_nearest(tree, self.x_goal)
         self.trees[tree].E[self.x_goal] = x_nearest
 
+    # get_path 마지막에서 호출
+    # 입력 변수 : 0(tree), 출발점(x_init), 도착점(x_goal)
+    # 함수 설명 : 역추적해서 쭉 찾아간다.
+    # 반환 변수 : 경로
     def reconstruct_path(self, tree, x_init, x_goal):
         """
         Reconstruct path from start to goal
-        :param tree: int, tree in which to find path
-        :param x_init: tuple, starting vertex
-        :param x_goal: tuple, ending vertex
         :return: sequence of vertices from start to goal
         """
         path = [x_goal]
         current = x_goal
+        # 예외 체크
         if x_init == x_goal:
             return path
+        
+        # 부모가 출발점이 나올 때까지 경로를 역순으로 생성
         while not self.trees[tree].E[current] == x_init:
             path.append(self.trees[tree].E[current])
+            # 부모 업데이트
             current = self.trees[tree].E[current]
+        # 출발점도 추가
         path.append(x_init)
+        # 역추적했으니 다시 역순으로 정렬
         path.reverse()
         return path
 
+    # 함수 발동 : rrt.py에 있는 rrt_search에서 호출
+    # 입력 변수 : 없다.
+    # 함수 설명 : 
+    # 반환 변수 : 
     def check_solution(self):
-        # probabilistically check if solution found
+        # 해결책을 찾았는지 확률적으로 확인
+        # random.random() random모듈의 random()함수를 호출하면
+        # 0이상 1미만의 숫자 중 아무 숫자를 돌려줌
         if self.prc and random.random() < self.prc:
             print("Checking if can connect to goal at", str(self.samples_taken), "samples")
             path = self.get_path()
             if path is not None:
                 return True, path
-        # check if can connect to goal after generating max_samples
+        # 내가 설정한 max_samples에 도달한 경우 그냥 반환해버리기
         if self.samples_taken >= self.max_samples:
             return True, self.get_path()
         return False, None
@@ -202,7 +220,6 @@ class RRTBase(object):
     # 입력 변수 : 방향을 유지한 내분점
     # 함수 설명 : 포인트가 경계를 벗어나면 경계로 설정
     # 반환 변수 : 방향을 유지한 내분점
-
     def bound_point(self, point):
         # np.maximum함수 : 두 좌표를 비교해서 더 큰 x, y좌표를 가져온다. https://jimmy-ai.tistory.com/70
         # np.minimum함수는 반대

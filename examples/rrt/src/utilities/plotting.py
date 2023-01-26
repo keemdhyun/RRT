@@ -25,11 +25,11 @@ class Plot(object):
         self.fig = {'data': self.data,
                     'layout': self.layout}
 
+    # rrt_2d.py에서 호출
+    # 입력 변수 : X, trees
     def plot_tree(self, X, trees):
         """
         Plot tree
-        :param X: Search Space
-        :param trees: list of trees
         """
         if X.dimensions == 2:  # plot in 2D
             self.plot_tree_2d(trees)
@@ -38,11 +38,14 @@ class Plot(object):
         else:  # can't plot in higher dimensions
             print("Cannot plot in > 3 dimensions")
 
+    # plot_tree에서 호출
+    # 입력 변수 : X, trees
     def plot_tree_2d(self, trees):
         """
         Plot 2D trees
         :param trees: trees to plot
         """
+        # 그 동안 만들어두었던 트리들을 다 그린다.(가지들)
         for i, tree in enumerate(trees):
             for start, end in tree.E.items():
                 if end is not None:
@@ -116,11 +119,11 @@ class Plot(object):
         else:  # can't plot in higher dimensions
             print("Cannot plot in > 3 dimensions")
 
+    # rrt_2d.py에서 호출
+    # 입력 변수 : X, path
     def plot_path(self, X, path):
         """
         Plot path through Search Space
-        :param X: Search Space
-        :param path: path through space given as a sequence of points
         """
         if X.dimensions == 2:  # plot in 2D
             x, y = [], []
@@ -171,7 +174,7 @@ class Plot(object):
                 y=[x_init[1]],
                 line=dict(
                     color="orange",
-                    width=10
+                    width=100
                 ),
                 mode="markers"
             )
@@ -205,7 +208,7 @@ class Plot(object):
                 y=[x_goal[1]],
                 line=dict(
                     color="green",
-                    width=10
+                    width=100
                 ),
                 mode="markers"
             )
@@ -231,13 +234,9 @@ class Plot(object):
         """
         Render the plot to a file
         """
+        # self.fig = {'data': self.data, 'layout': self.layout}         오른쪽에 있는 놈을 장애물
         
         py.offline.plot(self.fig, filename="rrt_2d.html", auto_open=auto_open)
 
 
-'''
-numpy 버전 낮추기
-src위치 옮기기
-plotting.py 제일 마지막줄 바꾸기
-html github에서 다운받기
-'''
+

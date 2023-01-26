@@ -44,10 +44,12 @@ class RRT(RRTBase):
                         continue
 
                     # 정점들 연결(기존의 가장 가까운 점과 새로 생성한 내분점)
+                    # 여러 조건들을 만족하게끔해서 결국 선을 이어버린다.
                     self.connect_to_point(0, x_nearest, x_new)
 
                     solution = self.check_solution()
                     if solution[0]:
+                        # 찾은 경로를 반환해준다.
                         return solution[1]
                     
         

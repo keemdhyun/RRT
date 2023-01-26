@@ -50,7 +50,7 @@ def generate_random_obstacles(X, start, end, n):
 
     return obstacles
 
-# 함수 발동 : search_space.py에서 호출
+# 함수 발동 : search_space.py 생성자에서 호출
 # 입력 변수 : 0
 # 함수 내용
 # 반환 변수 :
